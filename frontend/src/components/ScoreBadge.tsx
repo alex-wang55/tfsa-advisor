@@ -1,9 +1,16 @@
-function bucket(score: number): 'high' | 'mid' | 'low' {
-  if (score >= 65) return 'high'
-  if (score >= 45) return 'mid'
-  return 'low'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+
+function tone(score: number): 'success' | 'default' | 'warning' {
+  if (score >= 65) return 'success'
+  if (score >= 45) return 'default'
+  return 'warning'
 }
 
-export function ScoreBadge({ score }: { score: number }) {
-  return <span className={`score-badge ${bucket(score)}`}>{Math.round(score)}</span>
+export function ScoreBadge({ score, className }: { score: number; className?: string }) {
+  return (
+    <Badge variant={tone(score)} className={cn('font-mono tabular-nums', className)}>
+      {Math.round(score)}
+    </Badge>
+  )
 }

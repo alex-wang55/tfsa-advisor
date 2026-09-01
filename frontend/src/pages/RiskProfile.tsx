@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { Experience, RiskBucket, RiskTolerance } from '../api/types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 const HORIZON_OPTIONS = [
   { value: 2, label: '< 3 years' },
@@ -9,9 +13,9 @@ const HORIZON_OPTIONS = [
 ]
 
 const TOLERANCE_OPTIONS: { value: RiskTolerance; label: string }[] = [
-  { value: 'low', label: 'Low — I\'d panic-sell a 20% drop' },
-  { value: 'medium', label: 'Medium — a 20% drop would worry me but I\'d hold' },
-  { value: 'high', label: 'High — I\'m comfortable with big swings' },
+  { value: 'low', label: "Low — I'd panic-sell a 20% drop" },
+  { value: 'medium', label: "Medium — a 20% drop would worry me but I'd hold" },
+  { value: 'high', label: "High — I'm comfortable with big swings" },
 ]
 
 const EXPERIENCE_OPTIONS: { value: Experience; label: string }[] = [
@@ -21,9 +25,37 @@ const EXPERIENCE_OPTIONS: { value: Experience; label: string }[] = [
 ]
 
 const BUCKET_DESCRIPTIONS: Record<RiskBucket, string> = {
-  conservative: 'Analysis will favor stability and dividend quality over growth, and the TFSA planner will suggest a larger ETF core.',
+  conservative:
+    'Analysis will favor stability and dividend quality over growth, and the TFSA planner will suggest a larger ETF core.',
   balanced: 'Analysis will weigh trend, value, quality, and income fairly evenly.',
-  growth: 'Analysis will favor trend/momentum more heavily, and the TFSA planner will allow a larger individual-stock satellite.',
+  growth:
+    'Analysis will favor trend/momentum more heavily, and the TFSA planner will allow a larger individual-stock satellite.',
+}
+
+function OptionPill({
+  selected,
+  onClick,
+  children,
+}: {
+  selected: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-md border px-3 py-2 text-left text-[13px] font-medium transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        selected
+          ? 'border-accent bg-accent/10 text-accent'
+          : 'border-border text-foreground-muted hover:border-border-strong hover:text-foreground',
+      )}
+    >
+      {children}
+    </button>
+  )
 }
 
 export default function RiskProfilePage() {
@@ -36,9 +68,6 @@ export default function RiskProfilePage() {
   useEffect(() => {
     api.getProfile().then((profile) => {
       if (!profile) return
-      // Map the stored value back onto one of the three horizon buckets
-      // (server stores a raw year count, which may not exactly match a
-      // preset option's representative value).
       const years = profile.time_horizon_years
       setHorizon(years < 3 ? 2 : years < 8 ? 6 : 12)
       setTolerance(profile.risk_tolerance)
@@ -62,65 +91,76 @@ export default function RiskProfilePage() {
   }
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>Your Risk Profile</h1>
-        <p>
-          This drives how every stock is scored and what allocation the TFSA planner suggests. It's
-          not a formal suitability assessment — just a simple starting point.
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Your Risk Profile</h1>
+        <p className="mt-1 max-w-2xl text-sm text-foreground-muted">
+          This drives how every stock is scored and what allocation the TFSA planner suggests. It's not
+          a formal suitability assessment — just a simple starting point.
         </p>
       </div>
 
-      <div className="card">
-        <div className="section-title">How long until you'd likely need this money?</div>
-        <div className="radio-group">
-          {HORIZON_OPTIONS.map((opt) => (
-            <div
-              key={opt.value}
-              className={`radio-option ${horizon === opt.value ? 'selected' : ''}`}
-              onClick={() => setHorizon(opt.value)}
-            >
-              {opt.label}
+      <Card>
+        <CardContent className="flex flex-col gap-6 pt-6">
+          <div>
+            <p className="mb-2.5 text-sm font-medium text-foreground">
+              How long until you'd likely need this money?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {HORIZON_OPTIONS.map((opt) => (
+                <OptionPill key={opt.value} selected={horizon === opt.value} onClick={() => setHorizon(opt.value)}>
+                  {opt.label}
+                </OptionPill>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="section-title">How would you react to a 20% drop in a stock you own?</div>
-        <div className="radio-group">
-          {TOLERANCE_OPTIONS.map((opt) => (
-            <div
-              key={opt.value}
-              className={`radio-option ${tolerance === opt.value ? 'selected' : ''}`}
-              onClick={() => setTolerance(opt.value)}
-            >
-              {opt.label}
+          <div>
+            <p className="mb-2.5 text-sm font-medium text-foreground">
+              How would you react to a 20% drop in a stock you own?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {TOLERANCE_OPTIONS.map((opt) => (
+                <OptionPill key={opt.value} selected={tolerance === opt.value} onClick={() => setTolerance(opt.value)}>
+                  {opt.label}
+                </OptionPill>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="section-title">How much investing experience do you have?</div>
-        <div className="radio-group">
-          {EXPERIENCE_OPTIONS.map((opt) => (
-            <div
-              key={opt.value}
-              className={`radio-option ${experience === opt.value ? 'selected' : ''}`}
-              onClick={() => setExperience(opt.value)}
-            >
-              {opt.label}
+          <div>
+            <p className="mb-2.5 text-sm font-medium text-foreground">
+              How much investing experience do you have?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {EXPERIENCE_OPTIONS.map((opt) => (
+                <OptionPill key={opt.value} selected={experience === opt.value} onClick={() => setExperience(opt.value)}>
+                  {opt.label}
+                </OptionPill>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
 
-        <button className="btn" style={{ marginTop: 8 }} onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : 'Save profile'}
-        </button>
-      </div>
+          <div>
+            <Button onClick={save} disabled={saving}>
+              {saving ? 'Saving…' : 'Save profile'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {bucket && (
-        <div className="card">
-          <div className="section-title">Your risk bucket: <span className="pill">{bucket}</span></div>
-          <p className="muted">{BUCKET_DESCRIPTIONS[bucket]}</p>
-        </div>
+        <Card>
+          <CardHeader className="flex-row items-center gap-2 space-y-0">
+            <CardTitle>Your risk bucket</CardTitle>
+            <Badge variant="accent" className="capitalize">
+              {bucket}
+            </Badge>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <p className="text-sm text-foreground-muted">{BUCKET_DESCRIPTIONS[bucket]}</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   )

@@ -1,8 +1,13 @@
+import { Star, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { ScoreBadge } from '../components/ScoreBadge'
 import type { ScreenResultItem, WatchlistItemOut } from '../api/types'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 export default function WatchlistPage() {
   const navigate = useNavigate()
@@ -45,55 +50,78 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>Watchlist</h1>
-        <p>Tickers you're tracking, with a live score snapshot each time you visit.</p>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Watchlist</h1>
+        <p className="mt-1 text-sm text-foreground-muted">
+          Tickers you're tracking, with a live score snapshot each time you visit.
+        </p>
       </div>
 
-      <div className="card">
-        {loading && <p className="center-message">Loading…</p>}
-        {!loading && items.length === 0 && (
-          <p className="center-message">
-            Nothing here yet — analyze a stock and click "+ Watchlist" to add it.
-          </p>
+      <Card className="p-2 sm:p-4">
+        {loading && (
+          <div className="flex flex-col gap-3 p-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full" />
+            ))}
+          </div>
         )}
+
+        {!loading && items.length === 0 && (
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <Star className="h-5 w-5 text-foreground-subtle" />
+            <p className="text-sm font-medium text-foreground">Nothing here yet</p>
+            <p className="max-w-xs text-sm text-foreground-subtle">
+              Analyze a stock and click "Watchlist" to start tracking it here.
+            </p>
+          </div>
+        )}
+
         {!loading && items.length > 0 && (
-          <table>
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Name</th>
-                <th>Score</th>
-                <th>Added</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="pl-3">Ticker</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Score</TableHead>
+                <TableHead className="hidden sm:table-cell">Added</TableHead>
+                <TableHead className="pr-3" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {items.map((item) => {
                 const snap = snapshots[item.ticker]
                 return (
-                  <tr key={item.id}>
-                    <td className="clickable" onClick={() => navigate(`/stock/${item.ticker}`)}>
-                      <strong>{item.ticker}</strong>
-                    </td>
-                    <td className="muted">{snap && snap !== 'error' ? snap.name : '—'}</td>
-                    <td>
-                      {snap === 'error' && <span className="muted">unavailable</span>}
+                  <TableRow key={item.id}>
+                    <TableCell
+                      className="cursor-pointer pl-3 font-mono text-[13px] font-semibold text-foreground"
+                      onClick={() => navigate(`/stock/${item.ticker}`)}
+                    >
+                      {item.ticker}
+                    </TableCell>
+                    <TableCell className="text-foreground-muted">
+                      {snap && snap !== 'error' ? snap.name : '—'}
+                    </TableCell>
+                    <TableCell>
+                      {snap === 'error' && <span className="text-sm text-foreground-subtle">unavailable</span>}
                       {snap && snap !== 'error' && <ScoreBadge score={snap.score} />}
-                      {!snap && <span className="muted">loading…</span>}
-                    </td>
-                    <td className="muted">{item.added_on}</td>
-                    <td>
-                      <button className="btn danger" onClick={() => remove(item.id)}>Remove</button>
-                    </td>
-                  </tr>
+                      {!snap && <Skeleton className="h-5 w-9" />}
+                    </TableCell>
+                    <TableCell className="hidden text-foreground-muted sm:table-cell">
+                      {item.added_on}
+                    </TableCell>
+                    <TableCell className="pr-3 text-right">
+                      <Button variant="ghost" size="icon" onClick={() => remove(item.id)}>
+                        <Trash2 className="text-foreground-subtle" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 )
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </Card>
     </div>
   )
 }
