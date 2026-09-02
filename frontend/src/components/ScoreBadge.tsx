@@ -9,7 +9,7 @@ function tone(score: number): 'success' | 'default' | 'warning' {
 
 export function ScoreBadge({ score, className }: { score: number; className?: string }) {
   return (
-    <Badge variant={tone(score)} className={cn('font-mono tabular-nums', className)}>
+    <Badge variant={tone(score)} className={cn('tabular-nums px-2.5 py-1 text-[13px]', className)}>
       {Math.round(score)}
     </Badge>
   )

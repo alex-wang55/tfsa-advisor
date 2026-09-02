@@ -17,7 +17,7 @@ function SegmentedControl<T extends string>({
     <div
       role="tablist"
       className={cn(
-        'inline-flex items-center gap-0.5 rounded-md border border-border bg-surface p-0.5',
+        'card-shadow inline-flex items-center gap-0.5 rounded-full border border-border bg-surface p-1',
         className,
       )}
     >
@@ -30,7 +30,7 @@ function SegmentedControl<T extends string>({
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'rounded-[5px] px-3 py-1.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
               active
                 ? 'bg-accent text-accent-foreground'
                 : 'text-foreground-muted hover:bg-surface-hover hover:text-foreground',

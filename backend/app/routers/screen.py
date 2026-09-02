@@ -45,6 +45,7 @@ def screen(
                 sector=analysis.metrics.sector,
                 score=analysis.score,
                 sub_scores=analysis.sub_scores,
+                price_change_pct=analysis.metrics.price_change_pct,
             ))
 
     results.sort(key=lambda r: r.score, reverse=True)

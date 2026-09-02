@@ -102,27 +102,27 @@ export default function TfsaPlannerPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className="rounded-md bg-surface-hover p-3.5">
                 <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle">
                   Lifetime room
                 </div>
-                <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
+                <div className="mt-1 text-lg font-bold tabular-nums text-foreground">
                   ${room.total_lifetime_room.toLocaleString()}
                 </div>
               </div>
-              <div className="rounded-md border border-border bg-background p-3">
+              <div className="rounded-md bg-surface-hover p-3.5">
                 <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle">
                   Contributed to date
                 </div>
-                <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
+                <div className="mt-1 text-lg font-bold tabular-nums text-foreground">
                   ${room.total_contributions_to_date.toLocaleString()}
                 </div>
               </div>
-              <div className="rounded-md border border-accent/30 bg-accent/5 p-3">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-accent">
+              <div className="rounded-md bg-success-bg p-3.5">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-success">
                   Available now
                 </div>
-                <div className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
+                <div className="mt-1 text-lg font-bold tabular-nums text-foreground">
                   ${room.available_room_now.toLocaleString()}
                 </div>
               </div>
@@ -144,7 +144,7 @@ export default function TfsaPlannerPage() {
             <CardTitle>Suggested starting allocation</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex h-6 overflow-hidden rounded-md">
+            <div className="flex h-6 overflow-hidden rounded-full">
               <div
                 className="bg-accent"
                 style={{ width: `${allocation.core_etf_pct}%` }}
@@ -168,7 +168,7 @@ export default function TfsaPlannerPage() {
               {allocation.rationale.map((r, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 rounded-md border border-border bg-surface-hover px-3 py-2.5 text-sm leading-relaxed text-foreground"
+                  className="flex items-start gap-2.5 rounded-lg bg-surface-hover px-3.5 py-3 text-sm leading-relaxed text-foreground"
                 >
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground-subtle" />
                   <span>{r}</span>

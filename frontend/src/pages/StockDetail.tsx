@@ -2,9 +2,11 @@ import { Check, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
+import { ChangeIndicator } from '../components/ChangeIndicator'
 import { ScoreBadge } from '../components/ScoreBadge'
+import { TickerAvatar } from '../components/TickerAvatar'
 import { ExplanationPanel } from '../components/ExplanationPanel'
-import { PriceChart } from '../components/PriceChart'
+import { StockChart } from '../components/StockChart'
 import type { StockAnalysis } from '../api/types'
 import { fmtMarketCap, fmtMoney, fmtNum, fmtPct } from '../utils/format'
 import { Badge } from '@/components/ui/badge'
@@ -68,9 +70,9 @@ export default function StockDetailPage() {
   if (!analysis) return null
   const m = analysis.metrics
 
-  const metricTiles: { label: string; value: string }[] = [
-    { label: 'Price', value: fmtMoney(m.price, m.currency) },
-    { label: '12m momentum', value: fmtPct(m.momentum_12m) },
+  const metricTiles: { label: string; value: string; change?: number | null }[] = [
+    { label: '3m momentum', value: fmtPct(m.momentum_3m), change: m.momentum_3m },
+    { label: '12m momentum', value: fmtPct(m.momentum_12m), change: m.momentum_12m },
     { label: 'RSI (14)', value: fmtNum(m.rsi14, 0) },
     { label: 'Volatility (ann.)', value: `${fmtNum(m.volatility_annualized, 0)}%` },
     { label: 'P/E (trailing)', value: fmtNum(m.pe_trailing, 1) },
@@ -89,18 +91,21 @@ export default function StockDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-mono text-xl font-semibold tracking-tight text-foreground">
-            {m.ticker}
-            {m.name && <span className="ml-2 font-sans text-base font-normal text-foreground-muted">{m.name}</span>}
-          </h1>
-          <div className="mt-2 flex items-center gap-1.5">
-            <Badge>{m.exchange}</Badge>
-            {m.sector && <Badge>{m.sector}</Badge>}
+        <div className="flex items-center gap-3">
+          <TickerAvatar ticker={m.ticker} size={44} />
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
+              {m.ticker}
+              {m.name && <span className="ml-2 text-base font-normal text-foreground-muted">{m.name}</span>}
+            </h1>
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <Badge>{m.exchange}</Badge>
+              {m.sector && <Badge>{m.sector}</Badge>}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <ScoreBadge score={analysis.score} className="px-3 py-1 text-sm" />
+          <ScoreBadge score={analysis.score} className="px-3 py-1.5 text-sm" />
           <Button
             variant="outline"
             size="sm"
@@ -115,16 +120,28 @@ export default function StockDetailPage() {
 
       <Card>
         <CardContent className="pt-2">
-          <PriceChart history={m.history} currency={m.currency} />
+          <div className="mb-4 flex items-baseline gap-3">
+            <span className="text-3xl font-bold tabular-nums text-foreground">
+              {fmtMoney(m.price, m.currency)}
+            </span>
+            <ChangeIndicator value={m.price_change_pct} amount={m.price_change} size="md" />
+          </div>
+          <StockChart history={m.history} currency={m.currency} />
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {metricTiles.map((tile) => (
-              <div key={tile.label} className="rounded-md border border-border bg-background p-3">
+              <div key={tile.label} className="rounded-md bg-surface-hover p-3.5">
                 <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle">
                   {tile.label}
                 </div>
-                <div className="mt-1 font-mono text-base font-semibold tabular-nums text-foreground">
-                  {tile.value}
-                </div>
+                {tile.change !== undefined ? (
+                  <div className="mt-1">
+                    <ChangeIndicator value={tile.change} />
+                  </div>
+                ) : (
+                  <div className="mt-1 text-base font-semibold tabular-nums text-foreground">
+                    {tile.value}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -138,11 +155,11 @@ export default function StockDetailPage() {
         <CardContent>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {subScores.map((s) => (
-              <div key={s.label} className="rounded-md border border-border bg-background p-3 text-center">
+              <div key={s.label} className="rounded-md bg-surface-hover p-3.5 text-center">
                 <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle">
                   {s.label}
                 </div>
-                <div className="mt-1 font-mono text-xl font-semibold tabular-nums text-foreground">
+                <div className="mt-1 text-xl font-bold tabular-nums text-foreground">
                   {s.value}
                 </div>
               </div>

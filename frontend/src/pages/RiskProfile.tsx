@@ -46,10 +46,10 @@ function OptionPill({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-md border px-3 py-2 text-left text-[13px] font-medium transition-colors',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+        'rounded-full border px-4 py-2 text-left text-[13px] font-semibold transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
         selected
-          ? 'border-accent bg-accent/10 text-accent'
+          ? 'border-accent bg-accent text-accent-foreground'
           : 'border-border text-foreground-muted hover:border-border-strong hover:text-foreground',
       )}
     >

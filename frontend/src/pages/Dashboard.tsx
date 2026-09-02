@@ -1,15 +1,16 @@
-import { AlertTriangle, Search } from 'lucide-react'
+import { AlertTriangle, ChevronRight, Search } from 'lucide-react'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import { ChangeIndicator } from '../components/ChangeIndicator'
 import { ScoreBadge } from '../components/ScoreBadge'
+import { TickerAvatar } from '../components/TickerAvatar'
 import type { ScreenResultItem } from '../api/types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
 type ExchangeFilter = 'ALL' | 'TSX' | 'US'
 
@@ -43,19 +44,19 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">Stock Screener</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Stock Screener</h1>
         <p className="mt-1 max-w-2xl text-sm text-foreground-muted">
-          Ranked from a curated TSX + US universe using your risk profile. Scores are a heuristic
-          screening tool, not a prediction of future returns — click any row for the full breakdown.
+          Ranked from a curated TSX + US universe using your risk profile — tap any stock for the
+          full breakdown. Scores are a heuristic screening tool, not a prediction of future returns.
         </p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <form onSubmit={onSearchSubmit} className="flex flex-1 gap-2 sm:max-w-sm">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-subtle" />
             <Input
-              className="pl-9"
+              className="pl-11"
               placeholder="AAPL, SHOP.TO…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -77,11 +78,11 @@ export default function DashboardPage() {
         />
       </div>
 
-      <Card className="p-2 sm:p-4">
+      <Card className="overflow-hidden p-2">
         {loading && (
-          <div className="flex flex-col gap-3 p-4">
+          <div className="flex flex-col gap-2 p-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
+              <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))}
           </div>
         )}
@@ -101,44 +102,32 @@ export default function DashboardPage() {
         )}
 
         {!loading && !error && results.length > 0 && (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-3">Ticker</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Sector</TableHead>
-                <TableHead>Market</TableHead>
-                <TableHead className="pr-3 text-right">Score</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {results.map((r) => (
-                <TableRow
-                  key={r.ticker}
-                  className="cursor-pointer"
-                  onClick={() => goToTicker(r.ticker)}
-                >
-                  <TableCell className="pl-3 font-mono text-[13px] font-semibold text-foreground">
-                    {r.ticker}
-                  </TableCell>
-                  <TableCell className="max-w-[220px] truncate text-foreground-muted">
-                    {r.name ?? '—'}
-                  </TableCell>
-                  <TableCell className="hidden text-foreground-muted sm:table-cell">
-                    {r.sector ?? '—'}
-                  </TableCell>
-                  <TableCell>
-                    <span className="rounded border border-border px-1.5 py-0.5 text-[11px] font-medium text-foreground-muted">
+          <div className="flex flex-col">
+            {results.map((r) => (
+              <button
+                key={r.ticker}
+                onClick={() => goToTicker(r.ticker)}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-surface-hover"
+              >
+                <TickerAvatar ticker={r.ticker} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{r.ticker}</span>
+                    <span className="rounded-full bg-surface-hover px-2 py-0.5 text-[11px] font-medium text-foreground-subtle">
                       {r.exchange}
                     </span>
-                  </TableCell>
-                  <TableCell className="pr-3 text-right">
-                    <ScoreBadge score={r.score} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </div>
+                  <p className="truncate text-[13px] text-foreground-subtle">
+                    {r.name ?? '—'}
+                    {r.sector && <span className="hidden sm:inline"> · {r.sector}</span>}
+                  </p>
+                </div>
+                <ChangeIndicator value={r.price_change_pct} className="hidden w-20 justify-end sm:inline-flex" />
+                <ScoreBadge score={r.score} />
+                <ChevronRight className="hidden h-4 w-4 text-foreground-subtle sm:block" />
+              </button>
+            ))}
+          </div>
         )}
       </Card>
     </div>

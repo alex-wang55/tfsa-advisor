@@ -5,6 +5,8 @@ export function PriceChart({ history, currency }: { history: HistoryPoint[]; cur
   if (history.length === 0) {
     return <p className="text-sm text-foreground-subtle">No price history available.</p>
   }
+  const isUp = history[history.length - 1].close >= history[0].close
+  const lineColor = isUp ? 'var(--success)' : 'var(--negative)'
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={history} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -34,7 +36,7 @@ export function PriceChart({ history, currency }: { history: HistoryPoint[]; cur
           }}
           labelStyle={{ color: 'var(--foreground-muted)' }}
         />
-        <Line type="monotone" dataKey="close" stroke="var(--accent)" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="close" stroke={lineColor} strokeWidth={2} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   )

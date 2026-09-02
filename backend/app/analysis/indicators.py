@@ -47,10 +47,23 @@ def annualized_volatility(close: pd.Series, trading_days_per_year: int = 252) ->
     return float(daily_returns.std() * np.sqrt(trading_days_per_year) * 100)
 
 
+def day_change(close: pd.Series) -> tuple[float | None, float | None]:
+    """Dollar and percent change vs. the previous session's close."""
+    if len(close) < 2:
+        return None, None
+    prev, curr = float(close.iloc[-2]), float(close.iloc[-1])
+    if prev == 0:
+        return None, None
+    return curr - prev, (curr - prev) / prev * 100
+
+
 def compute_all(history: pd.DataFrame) -> dict:
     close = history["Close"].dropna()
+    change, change_pct = day_change(close)
     return {
         "price": float(close.iloc[-1]) if len(close) else None,
+        "price_change": change,
+        "price_change_pct": change_pct,
         "sma50": sma(close, 50),
         "sma200": sma(close, 200),
         "rsi14": rsi14(close),

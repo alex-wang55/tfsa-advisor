@@ -12,6 +12,9 @@ export interface ExplanationBullet {
 
 export interface HistoryPoint {
   date: string
+  open: number
+  high: number
+  low: number
   close: number
 }
 
@@ -22,6 +25,8 @@ export interface StockMetrics {
   sector: string | null
   currency: string | null
   price: number | null
+  price_change: number | null
+  price_change_pct: number | null
   sma50: number | null
   sma200: number | null
   rsi14: number | null
@@ -53,6 +58,7 @@ export interface ScreenResultItem {
   sector: string | null
   score: number
   sub_scores: SubScores
+  price_change_pct: number | null
 }
 
 export type RiskTolerance = 'low' | 'medium' | 'high'

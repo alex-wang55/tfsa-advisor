@@ -17,8 +17,14 @@ def analyze_ticker(ticker: str, risk_bucket: str = "balanced") -> StockAnalysis:
     fund = fundamentals.extract(info, price=tech.get("price"))
 
     history_points = [
-        {"date": idx.strftime("%Y-%m-%d"), "close": round(float(row["Close"]), 2)}
-        for idx, row in history.tail(252).iterrows()
+        {
+            "date": idx.strftime("%Y-%m-%d"),
+            "open": round(float(row["Open"]), 2),
+            "high": round(float(row["High"]), 2),
+            "low": round(float(row["Low"]), 2),
+            "close": round(float(row["Close"]), 2),
+        }
+        for idx, row in history.iterrows()
     ]
 
     metrics = StockMetrics(

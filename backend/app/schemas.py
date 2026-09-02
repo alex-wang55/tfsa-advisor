@@ -22,6 +22,8 @@ class StockMetrics(BaseModel):
     sector: str | None = None
     currency: str | None = None
     price: float | None = None
+    price_change: float | None = None
+    price_change_pct: float | None = None
     sma50: float | None = None
     sma200: float | None = None
     rsi14: float | None = None
@@ -53,6 +55,7 @@ class ScreenResultItem(BaseModel):
     sector: str | None
     score: float
     sub_scores: SubScores
+    price_change_pct: float | None = None
 
 
 class RiskProfileIn(BaseModel):
