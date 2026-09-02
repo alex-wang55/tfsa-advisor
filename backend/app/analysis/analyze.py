@@ -6,12 +6,12 @@ from app.schemas import StockAnalysis, StockMetrics
 from app.analysis.scoring import score_stock
 
 
-def analyze_ticker(ticker: str, risk_bucket: str = "balanced") -> StockAnalysis:
+def analyze_ticker(ticker: str, risk_bucket: str = "balanced", force_refresh: bool = False) -> StockAnalysis:
     ticker = data.normalize_ticker(ticker)
     # 2y of history so 12-month momentum and 200-day SMA both have a full
     # trailing window available (a 1y fetch never has enough days for either).
-    history = data.fetch_history(ticker, period="2y")
-    info = data.fetch_info(ticker)
+    history = data.fetch_history(ticker, period="2y", force=force_refresh)
+    info = data.fetch_info(ticker, force=force_refresh)
 
     tech = indicators.compute_all(history)
     fund = fundamentals.extract(info, price=tech.get("price"))

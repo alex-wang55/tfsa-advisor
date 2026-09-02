@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @router.get("", response_model=list[ScreenResultItem])
 def screen(
     exchange: str | None = Query(default=None, description="'TSX' or 'US'"),
+    refresh: bool = Query(False),
     db: Session = Depends(get_db),
 ):
     profile = db.get(RiskProfile, 1)
@@ -27,7 +28,7 @@ def screen(
 
     def _safe_analyze(ticker: str):
         try:
-            return analyze_ticker(ticker, risk_bucket)
+            return analyze_ticker(ticker, risk_bucket, force_refresh=refresh)
         except Exception:
             logger.warning("Skipping %s in screen: fetch/analysis failed", ticker, exc_info=True)
             return None

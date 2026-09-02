@@ -1,12 +1,14 @@
 import { Check, Plus } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import { ChangeIndicator } from '../components/ChangeIndicator'
+import { RefreshControl } from '../components/RefreshControl'
 import { ScoreBadge } from '../components/ScoreBadge'
 import { TickerAvatar } from '../components/TickerAvatar'
 import { ExplanationPanel } from '../components/ExplanationPanel'
 import { StockChart } from '../components/StockChart'
+import { useAutoRefresh } from '../hooks/useAutoRefresh'
 import type { StockAnalysis } from '../api/types'
 import { fmtMarketCap, fmtMoney, fmtNum, fmtPct } from '../utils/format'
 import { Badge } from '@/components/ui/badge'
@@ -14,25 +16,48 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
+const AUTO_REFRESH_MS = 30 * 1000
+
 export default function StockDetailPage() {
   const { ticker } = useParams<{ ticker: string }>()
   const [analysis, setAnalysis] = useState<StockAnalysis | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [addState, setAddState] = useState<'idle' | 'adding' | 'added' | 'error'>('idle')
 
+  const load = useCallback(
+    (opts: { showSkeleton?: boolean; force?: boolean } = {}) => {
+      if (!ticker) return
+      if (opts.showSkeleton) {
+        setLoading(true)
+        setAnalysis(null)
+        setAddState('idle')
+      } else {
+        setRefreshing(true)
+      }
+      setError(null)
+      return api
+        .getStock(ticker, { refresh: opts.force })
+        .then((a) => {
+          setAnalysis(a)
+          setLastUpdated(new Date())
+        })
+        .catch((e) => setError(e instanceof ApiError ? e.message : 'Failed to load this ticker'))
+        .finally(() => {
+          setLoading(false)
+          setRefreshing(false)
+        })
+    },
+    [ticker],
+  )
+
   useEffect(() => {
-    if (!ticker) return
-    setLoading(true)
-    setError(null)
-    setAnalysis(null)
-    setAddState('idle')
-    api
-      .getStock(ticker)
-      .then(setAnalysis)
-      .catch((e) => setError(e instanceof ApiError ? e.message : 'Failed to load this ticker'))
-      .finally(() => setLoading(false))
-  }, [ticker])
+    load({ showSkeleton: true })
+  }, [load])
+
+  useAutoRefresh(() => load(), AUTO_REFRESH_MS)
 
   async function addToWatchlist() {
     if (!analysis) return
@@ -105,6 +130,7 @@ export default function StockDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <RefreshControl onRefresh={() => load({ force: true })} refreshing={refreshing} lastUpdated={lastUpdated} />
           <ScoreBadge score={analysis.score} className="px-3 py-1.5 text-sm" />
           <Button
             variant="outline"

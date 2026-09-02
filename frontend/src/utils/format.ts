@@ -14,6 +14,17 @@ export function fmtMoney(value: number | null | undefined, currency: string | nu
   return `${currency ?? ''} ${value.toFixed(2)}`.trim()
 }
 
+export function fmtTimeAgo(date: Date | null): string {
+  if (!date) return ''
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000))
+  if (seconds < 5) return 'just now'
+  if (seconds < 60) return `${seconds}s ago`
+  const minutes = Math.round(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.round(minutes / 60)
+  return `${hours}h ago`
+}
+
 export function fmtMarketCap(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—'
   if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`

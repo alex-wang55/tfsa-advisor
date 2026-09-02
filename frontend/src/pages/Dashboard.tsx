@@ -1,10 +1,12 @@
 import { AlertTriangle, ChevronRight, Search } from 'lucide-react'
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { ChangeIndicator } from '../components/ChangeIndicator'
+import { RefreshControl } from '../components/RefreshControl'
 import { ScoreBadge } from '../components/ScoreBadge'
 import { TickerAvatar } from '../components/TickerAvatar'
+import { useAutoRefresh } from '../hooks/useAutoRefresh'
 import type { ScreenResultItem } from '../api/types'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -13,6 +15,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Skeleton } from '@/components/ui/skeleton'
 
 type ExchangeFilter = 'ALL' | 'TSX' | 'US'
+const AUTO_REFRESH_MS = 2 * 60 * 1000
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -20,17 +23,35 @@ export default function DashboardPage() {
   const [exchange, setExchange] = useState<ExchangeFilter>('ALL')
   const [results, setResults] = useState<ScreenResultItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const load = useCallback(
+    (opts: { showSkeleton?: boolean; force?: boolean } = {}) => {
+      if (opts.showSkeleton) setLoading(true)
+      else setRefreshing(true)
+      setError(null)
+      return api
+        .screen(exchange === 'ALL' ? undefined : exchange, { refresh: opts.force })
+        .then((data) => {
+          setResults(data)
+          setLastUpdated(new Date())
+        })
+        .catch((e) => setError(e.message ?? 'Failed to load screener results'))
+        .finally(() => {
+          setLoading(false)
+          setRefreshing(false)
+        })
+    },
+    [exchange],
+  )
+
   useEffect(() => {
-    setLoading(true)
-    setError(null)
-    api
-      .screen(exchange === 'ALL' ? undefined : exchange)
-      .then(setResults)
-      .catch((e) => setError(e.message ?? 'Failed to load screener results'))
-      .finally(() => setLoading(false))
-  }, [exchange])
+    load({ showSkeleton: true })
+  }, [load])
+
+  useAutoRefresh(() => load(), AUTO_REFRESH_MS)
 
   function goToTicker(ticker: string) {
     navigate(`/stock/${encodeURIComponent(ticker)}`)
@@ -43,12 +64,20 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Stock Screener</h1>
-        <p className="mt-1 max-w-2xl text-sm text-foreground-muted">
-          Ranked from a curated TSX + US universe using your risk profile — tap any stock for the
-          full breakdown. Scores are a heuristic screening tool, not a prediction of future returns.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Stock Screener</h1>
+          <p className="mt-1 max-w-2xl text-sm text-foreground-muted">
+            Ranked from a curated TSX + US universe using your risk profile — tap any stock for the
+            full breakdown. Scores are a heuristic screening tool, not a prediction of future returns.
+          </p>
+        </div>
+        <RefreshControl
+          onRefresh={() => load({ force: true })}
+          refreshing={refreshing}
+          lastUpdated={lastUpdated}
+          className="shrink-0 pt-1"
+        />
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

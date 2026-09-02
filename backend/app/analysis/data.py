@@ -7,7 +7,7 @@ import time
 import pandas as pd
 import yfinance as yf
 
-CACHE_TTL_SECONDS = 15 * 60
+CACHE_TTL_SECONDS = 60
 _cache: dict[str, tuple[float, object]] = {}
 
 
@@ -15,9 +15,9 @@ class TickerNotFoundError(Exception):
     pass
 
 
-def _cached(key: str, fetch_fn):
+def _cached(key: str, fetch_fn, force: bool = False):
     now = time.time()
-    if key in _cache:
+    if not force and key in _cache:
         cached_at, value = _cache[key]
         if now - cached_at < CACHE_TTL_SECONDS:
             return value
@@ -34,7 +34,7 @@ def exchange_for_ticker(ticker: str) -> str:
     return "TSX" if ticker.endswith(".TO") or ticker.endswith(".V") else "US"
 
 
-def fetch_history(ticker: str, period: str = "1y") -> pd.DataFrame:
+def fetch_history(ticker: str, period: str = "1y", force: bool = False) -> pd.DataFrame:
     ticker = normalize_ticker(ticker)
 
     def _fetch():
@@ -43,10 +43,10 @@ def fetch_history(ticker: str, period: str = "1y") -> pd.DataFrame:
             raise TickerNotFoundError(f"No price history found for '{ticker}'")
         return hist
 
-    return _cached(f"history:{ticker}:{period}", _fetch)
+    return _cached(f"history:{ticker}:{period}", _fetch, force=force)
 
 
-def fetch_info(ticker: str) -> dict:
+def fetch_info(ticker: str, force: bool = False) -> dict:
     ticker = normalize_ticker(ticker)
 
     def _fetch():
@@ -58,4 +58,4 @@ def fetch_info(ticker: str) -> dict:
                 raise TickerNotFoundError(f"No info found for '{ticker}'")
         return info
 
-    return _cached(f"info:{ticker}", _fetch)
+    return _cached(f"info:{ticker}", _fetch, force=force)

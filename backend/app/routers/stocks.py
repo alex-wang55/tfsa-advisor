@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.analysis.analyze import analyze_ticker
@@ -16,8 +16,8 @@ def _current_risk_bucket(db: Session) -> str:
 
 
 @router.get("/{ticker}", response_model=StockAnalysis)
-def get_stock(ticker: str, db: Session = Depends(get_db)):
+def get_stock(ticker: str, refresh: bool = Query(False), db: Session = Depends(get_db)):
     try:
-        return analyze_ticker(ticker, _current_risk_bucket(db))
+        return analyze_ticker(ticker, _current_risk_bucket(db), force_refresh=refresh)
     except TickerNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

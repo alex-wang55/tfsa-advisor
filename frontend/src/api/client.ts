@@ -34,9 +34,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  getStock: (ticker: string) => request<StockAnalysis>(`/api/stocks/${encodeURIComponent(ticker)}`),
-  screen: (exchange?: 'TSX' | 'US') =>
-    request<ScreenResultItem[]>(`/api/screen${exchange ? `?exchange=${exchange}` : ''}`),
+  getStock: (ticker: string, opts?: { refresh?: boolean }) =>
+    request<StockAnalysis>(
+      `/api/stocks/${encodeURIComponent(ticker)}${opts?.refresh ? '?refresh=true' : ''}`,
+    ),
+  screen: (exchange?: 'TSX' | 'US', opts?: { refresh?: boolean }) => {
+    const params = new URLSearchParams()
+    if (exchange) params.set('exchange', exchange)
+    if (opts?.refresh) params.set('refresh', 'true')
+    const qs = params.toString()
+    return request<ScreenResultItem[]>(`/api/screen${qs ? `?${qs}` : ''}`)
+  },
 
   getProfile: () => request<RiskProfileOut | null>('/api/profile'),
   setProfile: (payload: RiskProfileIn) =>
