@@ -10,7 +10,8 @@ import type {
   WatchlistItemOut,
 } from './types'
 
-const BASE_URL = 'http://127.0.0.1:8000'
+// Set VITE_API_URL when deploying (e.g. on Vercel). Falls back to the local API.
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
 
 export class ApiError extends Error {
   status: number
