@@ -2,10 +2,16 @@
 with a simple in-memory TTL cache so the UI stays snappy and we don't hammer
 Yahoo's undocumented rate limits."""
 
+import os
 import time
 
 import pandas as pd
 import yfinance as yf
+
+# yfinance keeps a small on-disk cache in the home directory by default.
+# Point it somewhere writable (e.g. /tmp) on read-only hosts like Vercel.
+if os.getenv("YF_CACHE_DIR"):
+    yf.set_tz_cache_location(os.environ["YF_CACHE_DIR"])
 
 CACHE_TTL_SECONDS = 60
 _cache: dict[str, tuple[float, object]] = {}

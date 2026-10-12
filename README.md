@@ -40,15 +40,18 @@ Then open http://localhost:5173. The frontend expects the API at
 
 ## Deploying
 
-The frontend and API deploy separately, configured with two environment variables:
+It's deployed on Vercel as two projects from this repo:
 
-- **Frontend** (e.g. Vercel, root directory `frontend`): set `VITE_API_URL` to the API's public URL.
-- **API** (any host that runs a Python web server, e.g. Render or Railway, root directory `backend`):
-  start it with `uvicorn app.main:app --host 0.0.0.0 --port $PORT` and set `ALLOWED_ORIGINS` to the
-  frontend's URL. Separate several origins with commas.
+- **API** (root directory `backend`, FastAPI preset): set `ALLOWED_ORIGINS` to the frontend's URL
+  (comma-separate several). Vercel's filesystem is read-only except `/tmp`, so also set
+  `TFSA_DB_PATH=/tmp/tfsa.db` and `YF_CACHE_DIR=/tmp/yfinance`.
+- **Frontend** (root directory `frontend`, Vite preset): set `VITE_API_URL` to the API's URL.
+  `frontend/vercel.json` sends every path to `index.html` so client-side routes work on refresh.
 
-The SQLite database lives on the API host's disk, so on hosts with ephemeral storage saved data
-(watchlist, risk profile, TFSA account) resets when the service restarts.
+Any other host works too: run the API with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+
+The SQLite database lives on the API host's disk, so on hosts with ephemeral storage (Vercel
+included) saved data (watchlist, risk profile, TFSA account) resets when the instance recycles.
 
 ## What's in here
 
