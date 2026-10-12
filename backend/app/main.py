@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,9 +8,19 @@ from app.routers import profile, screen, stocks, tfsa, watchlist
 
 app = FastAPI(title="TFSA Investment Teacher API")
 
+# Comma-separated list of frontend origins allowed to call the API.
+# Set ALLOWED_ORIGINS when deploying, e.g. "https://tfsa-teacher.vercel.app".
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

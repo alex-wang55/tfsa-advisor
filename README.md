@@ -1,5 +1,7 @@
 # TFSA Investment Teacher
 
+[![tests](https://github.com/alex-wang55/tfsa-advisor/actions/workflows/tests.yml/badge.svg)](https://github.com/alex-wang55/tfsa-advisor/actions/workflows/tests.yml)
+
 An educational stock screener and TFSA planner. It pulls live market data for
 TSX + US stocks, scores them on trend/value/quality/income relative to your
 own risk profile, and explains its reasoning in plain English — plus TFSA-
@@ -35,6 +37,18 @@ npm run dev
 
 Then open http://localhost:5173. The frontend expects the API at
 `http://127.0.0.1:8000` (see `frontend/src/api/client.ts`).
+
+## Deploying
+
+The frontend and API deploy separately, configured with two environment variables:
+
+- **Frontend** (e.g. Vercel, root directory `frontend`): set `VITE_API_URL` to the API's public URL.
+- **API** (any host that runs a Python web server, e.g. Render or Railway, root directory `backend`):
+  start it with `uvicorn app.main:app --host 0.0.0.0 --port $PORT` and set `ALLOWED_ORIGINS` to the
+  frontend's URL. Separate several origins with commas.
+
+The SQLite database lives on the API host's disk, so on hosts with ephemeral storage saved data
+(watchlist, risk profile, TFSA account) resets when the service restarts.
 
 ## What's in here
 
