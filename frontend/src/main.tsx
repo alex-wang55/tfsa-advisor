@@ -8,6 +8,7 @@ import StockDetailPage from './pages/StockDetail.tsx'
 import TfsaPlannerPage from './pages/TfsaPlanner.tsx'
 import RiskProfilePage from './pages/RiskProfile.tsx'
 import WatchlistPage from './pages/Watchlist.tsx'
+import PortfolioPage from './pages/Portfolio.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<App />}>
           <Route index element={<DashboardPage />} />
           <Route path="stock/:ticker" element={<StockDetailPage />} />
+          <Route path="portfolio" element={<PortfolioPage />} />
           <Route path="planner" element={<TfsaPlannerPage />} />
           <Route path="watchlist" element={<WatchlistPage />} />
           <Route path="profile" element={<RiskProfilePage />} />

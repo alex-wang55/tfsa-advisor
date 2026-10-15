@@ -105,3 +105,84 @@ export interface WatchlistItemOut extends WatchlistItemIn {
   id: number
   added_on: string
 }
+
+// --- Practice (paper) trading ---
+
+export type PaperTransactionKind = 'deposit' | 'buy' | 'sell'
+
+/** One entry in the practice ledger. The ledger is stored in the browser and
+ * sent to the API, which prices and values it. */
+export interface PaperTransaction {
+  id: string
+  kind: PaperTransactionKind
+  ticker: string | null
+  name: string | null
+  exchange: string | null
+  currency: string
+  shares: number
+  price: number
+  fx_rate: number
+  amount_cad: number
+  executed_at: string
+}
+
+export interface PaperOrder {
+  ticker: string
+  side: 'buy' | 'sell'
+  amount_cad?: number
+  shares?: number
+}
+
+export interface PaperQuote {
+  ticker: string
+  name: string | null
+  exchange: string
+  currency: string
+  price: number
+  price_change_pct: number | null
+  fx_rate: number
+  price_cad: number
+  cash_cad: number
+  shares_held: number
+}
+
+export interface PaperHolding {
+  ticker: string
+  name: string | null
+  exchange: string
+  currency: string
+  shares: number
+  avg_cost: number
+  price: number
+  price_stale: boolean
+  fx_rate: number
+  market_value_cad: number
+  cost_basis_cad: number
+  unrealized_pnl_cad: number
+  unrealized_pnl_pct: number
+  day_change_cad: number
+  day_change_pct: number | null
+  weight_pct: number
+}
+
+export interface PaperPortfolio {
+  started_at: string
+  cash_cad: number
+  holdings_value_cad: number
+  total_value_cad: number
+  deposited_cad: number
+  total_return_cad: number
+  total_return_pct: number
+  day_change_cad: number
+  day_change_pct: number
+  realized_pnl_cad: number
+  unrealized_pnl_cad: number
+  usdcad: number | null
+  holdings: PaperHolding[]
+}
+
+export interface PaperHistoryPoint {
+  t: string
+  value_cad: number
+  deposited_cad: number
+}

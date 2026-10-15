@@ -1,5 +1,10 @@
 import type {
   AllocationSuggestion,
+  PaperHistoryPoint,
+  PaperOrder,
+  PaperPortfolio,
+  PaperQuote,
+  PaperTransaction,
   RiskProfileIn,
   RiskProfileOut,
   ScreenResultItem,
@@ -60,4 +65,18 @@ export const api = {
   addWatchlistItem: (payload: WatchlistItemIn) =>
     request<WatchlistItemOut>('/api/watchlist', { method: 'POST', body: JSON.stringify(payload) }),
   removeWatchlistItem: (id: number) => request<void>(`/api/watchlist/${id}`, { method: 'DELETE' }),
+
+  // Practice trading endpoints are stateless: each call carries the ledger.
+  paperPortfolio: (transactions: PaperTransaction[]) =>
+    request<PaperPortfolio | null>('/api/paper/portfolio', post({ transactions })),
+  paperHistory: (transactions: PaperTransaction[]) =>
+    request<PaperHistoryPoint[]>('/api/paper/history', post({ transactions })),
+  paperQuote: (transactions: PaperTransaction[], ticker: string) =>
+    request<PaperQuote>('/api/paper/quote', post({ transactions, ticker })),
+  paperOrder: (transactions: PaperTransaction[], order: PaperOrder) =>
+    request<PaperTransaction>('/api/paper/orders', post({ transactions, order })),
+}
+
+function post(body: unknown): RequestInit {
+  return { method: 'POST', body: JSON.stringify(body) }
 }

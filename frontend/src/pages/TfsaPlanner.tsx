@@ -1,6 +1,10 @@
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { AllocationSuggestion, TfsaRoomOut } from '../api/types'
+import { usePractice } from '../practice/store'
+import { fmtCurrency } from '../utils/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,6 +18,7 @@ export default function TfsaPlannerPage() {
   const [room, setRoom] = useState<TfsaRoomOut | null>(null)
   const [allocation, setAllocation] = useState<AllocationSuggestion | null>(null)
   const [saving, setSaving] = useState(false)
+  const { hasAccount } = usePractice()
 
   useEffect(() => {
     api.getRoom().then(setRoom)
@@ -40,7 +45,7 @@ export default function TfsaPlannerPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">TFSA Planner</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">TFSA Planner</h1>
         <p className="mt-1 text-sm text-foreground-muted">
           Estimate your contribution room and get a starting-point ETF/individual-stock split.
         </p>
@@ -127,6 +132,24 @@ export default function TfsaPlannerPage() {
                 </div>
               </div>
             </div>
+            {room.total_lifetime_room > 0 && (
+              <div className="mt-5">
+                <div className="flex h-2.5 overflow-hidden rounded-full bg-success-bg">
+                  <div
+                    className="bar-grow h-full rounded-full bg-foreground"
+                    style={{
+                      width: `${Math.min(100, (room.total_contributions_to_date / room.total_lifetime_room) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex justify-between text-[12px] text-foreground-subtle">
+                  <span>
+                    {((room.total_contributions_to_date / room.total_lifetime_room) * 100).toFixed(0)}% of your room used
+                  </span>
+                  <span>{fmtCurrency(room.available_room_now, 'CAD', { digits: 0 })} left</span>
+                </div>
+              </div>
+            )}
             {room.withdrawals_added_back_next_year > 0 && (
               <p className="mt-4 text-sm text-foreground-subtle">
                 Note: withdrawals only restore contribution room starting January 1 of next year — the
@@ -138,6 +161,28 @@ export default function TfsaPlannerPage() {
         </Card>
       )}
 
+      {room && room.available_room_now > 0 && (
+        <Link
+          to="/portfolio"
+          className="card-shadow group flex items-center gap-4 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-border-strong"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-bg">
+            <Sparkles className="h-4 w-4 text-success" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-semibold text-foreground">
+              {hasAccount ? 'Check on your practice portfolio' : 'Practice with your room first'}
+            </div>
+            <p className="text-[13px] text-foreground-muted">
+              {hasAccount
+                ? 'See how the stocks you picked with pretend money are doing.'
+                : `Start a practice account with your ${fmtCurrency(room.available_room_now, 'CAD', { digits: 0 })} of room in pretend money, and see how your picks would do before investing for real.`}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-foreground-subtle transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      )}
+
       {allocation && (
         <Card>
           <CardHeader>
@@ -146,11 +191,11 @@ export default function TfsaPlannerPage() {
           <CardContent>
             <div className="flex h-6 overflow-hidden rounded-full">
               <div
-                className="bg-accent"
+                className="bar-grow bg-accent"
                 style={{ width: `${allocation.core_etf_pct}%` }}
               />
               <div
-                className="bg-success"
+                className="bar-grow bg-success"
                 style={{ width: `${allocation.satellite_stock_pct}%` }}
               />
             </div>
