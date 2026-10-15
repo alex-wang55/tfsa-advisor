@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class SubScores(BaseModel):
@@ -97,3 +98,114 @@ class WatchlistItemIn(BaseModel):
 class WatchlistItemOut(WatchlistItemIn):
     id: int
     added_on: date
+
+
+# --- Practice (paper) trading ---
+# The practice ledger lives in the browser (so it survives serverless restarts
+# and each visitor gets their own); the API is stateless and receives it with
+# every request.
+
+MAX_LEDGER_TRANSACTIONS = 2000
+
+
+class PaperTransaction(BaseModel):
+    """One entry in the practice account's append-only ledger."""
+
+    id: str = Field(min_length=1, max_length=64)
+    kind: Literal["deposit", "buy", "sell"]
+    ticker: str | None = None
+    name: str | None = None
+    exchange: str | None = None
+    currency: str = "CAD"
+    shares: float = Field(default=0.0, ge=0)
+    price: float = Field(default=0.0, ge=0)  # per share, in `currency`
+    fx_rate: float = Field(default=1.0, gt=0)  # CAD per 1 unit of `currency`
+    amount_cad: float = Field(gt=0, le=10_000_000)  # gross cash moved
+    executed_at: datetime
+
+    @model_validator(mode="after")
+    def _trades_name_a_ticker(self):
+        if self.kind != "deposit" and not self.ticker:
+            raise ValueError("buy/sell transactions need a ticker")
+        return self
+
+
+class PaperLedgerIn(BaseModel):
+    transactions: list[PaperTransaction] = Field(max_length=MAX_LEDGER_TRANSACTIONS)
+
+
+class PaperQuoteIn(PaperLedgerIn):
+    ticker: str
+
+
+class PaperOrder(BaseModel):
+    """Size an order by dollars (CAD) or by shares - exactly one of the two."""
+
+    ticker: str
+    side: Literal["buy", "sell"]
+    amount_cad: float | None = Field(default=None, gt=0)
+    shares: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def _exactly_one_size(self):
+        if (self.amount_cad is None) == (self.shares is None):
+            raise ValueError("Provide either amount_cad or shares (not both)")
+        return self
+
+
+class PaperOrderIn(PaperLedgerIn):
+    order: PaperOrder
+
+
+class PaperQuoteOut(BaseModel):
+    ticker: str
+    name: str | None
+    exchange: str
+    currency: str
+    price: float
+    price_change_pct: float | None
+    fx_rate: float
+    price_cad: float
+    cash_cad: float
+    shares_held: float
+
+
+class PaperHolding(BaseModel):
+    ticker: str
+    name: str | None
+    exchange: str
+    currency: str
+    shares: float
+    avg_cost: float  # per share, in the listing currency
+    price: float  # latest, in the listing currency
+    price_stale: bool  # live data unavailable, so the last fill price is shown
+    fx_rate: float
+    market_value_cad: float
+    cost_basis_cad: float
+    unrealized_pnl_cad: float
+    unrealized_pnl_pct: float
+    day_change_cad: float
+    day_change_pct: float | None  # the stock's own move today
+    weight_pct: float
+
+
+class PaperPortfolioOut(BaseModel):
+    started_at: datetime
+    cash_cad: float
+    holdings_value_cad: float
+    total_value_cad: float
+    deposited_cad: float
+    total_return_cad: float
+    total_return_pct: float
+    day_change_cad: float
+    day_change_pct: float
+    realized_pnl_cad: float
+    unrealized_pnl_cad: float
+    usdcad: float | None
+    holdings: list[PaperHolding]
+
+
+class PaperHistoryPoint(BaseModel):
+    t: datetime
+    value_cad: float
+    deposited_cad: float

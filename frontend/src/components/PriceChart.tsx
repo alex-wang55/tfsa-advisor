@@ -1,5 +1,6 @@
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { HistoryPoint } from '../api/types'
+import { fmtCurrency } from '../utils/format'
 
 export function PriceChart({ history, currency }: { history: HistoryPoint[]; currency: string | null }) {
   if (history.length === 0) {
@@ -9,7 +10,13 @@ export function PriceChart({ history, currency }: { history: HistoryPoint[]; cur
   const lineColor = isUp ? 'var(--success)' : 'var(--negative)'
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <LineChart data={history} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+      <AreaChart data={history} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="price-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={lineColor} stopOpacity={0.2} />
+            <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey="date"
           tick={{ fontSize: 11, fill: 'var(--foreground-subtle)' }}
@@ -26,7 +33,8 @@ export function PriceChart({ history, currency }: { history: HistoryPoint[]; cur
           width={50}
         />
         <Tooltip
-          formatter={(value) => [`${currency ?? ''} ${Number(value).toFixed(2)}`, 'Close']}
+          cursor={{ stroke: 'var(--border-strong)', strokeDasharray: '3 3' }}
+          formatter={(value) => [fmtCurrency(Number(value), currency), 'Close']}
           contentStyle={{
             borderRadius: 8,
             fontSize: 13,
@@ -36,8 +44,17 @@ export function PriceChart({ history, currency }: { history: HistoryPoint[]; cur
           }}
           labelStyle={{ color: 'var(--foreground-muted)' }}
         />
-        <Line type="monotone" dataKey="close" stroke={lineColor} strokeWidth={2} dot={false} />
-      </LineChart>
+        <Area
+          type="monotone"
+          dataKey="close"
+          stroke={lineColor}
+          strokeWidth={2}
+          fill="url(#price-fill)"
+          dot={false}
+          activeDot={{ r: 4, strokeWidth: 0, fill: lineColor }}
+          isAnimationActive={false}
+        />
+      </AreaChart>
     </ResponsiveContainer>
   )
 }

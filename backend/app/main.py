@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import init_db
-from app.routers import profile, screen, stocks, tfsa, watchlist
+from app.routers import paper, profile, screen, stocks, tfsa, watchlist
 
 app = FastAPI(title="TFSA Investment Teacher API")
 
@@ -36,6 +36,7 @@ app.include_router(screen.router)
 app.include_router(tfsa.router)
 app.include_router(profile.router)
 app.include_router(watchlist.router)
+app.include_router(paper.router)
 
 
 @app.get("/api/health")

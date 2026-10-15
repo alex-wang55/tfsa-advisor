@@ -1,26 +1,36 @@
-import { Star, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Plus, ShoppingCart, Star, Trash2 } from 'lucide-react'
+import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, ApiError } from '../api/client'
 import { ChangeIndicator } from '../components/ChangeIndicator'
 import { RefreshControl } from '../components/RefreshControl'
 import { ScoreBadge } from '../components/ScoreBadge'
+import { MiniSubScores } from '../components/SubScoreBars'
 import { TickerAvatar } from '../components/TickerAvatar'
+import { TradeDialog } from '../components/TradeDialog'
 import { useAutoRefresh } from '../hooks/useAutoRefresh'
 import type { ScreenResultItem, WatchlistItemOut } from '../api/types'
+import { fmtCurrency } from '../utils/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const AUTO_REFRESH_MS = 60 * 1000
 
+type Snapshot = ScreenResultItem & { price: number | null; currency: string | null }
+
 export default function WatchlistPage() {
   const navigate = useNavigate()
   const [items, setItems] = useState<WatchlistItemOut[]>([])
-  const [snapshots, setSnapshots] = useState<Record<string, ScreenResultItem | 'error'>>({})
+  const [snapshots, setSnapshots] = useState<Record<string, Snapshot | 'error'>>({})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [newTicker, setNewTicker] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
+  const [trade, setTrade] = useState<string | null>(null)
 
   const load = useCallback(
     async (opts: { showSkeleton?: boolean; force?: boolean } = {}) => {
@@ -44,6 +54,8 @@ export default function WatchlistPage() {
                   score: a.score,
                   sub_scores: a.sub_scores,
                   price_change_pct: a.metrics.price_change_pct,
+                  price: a.metrics.price,
+                  currency: a.metrics.currency,
                 },
               })),
             )
@@ -67,6 +79,25 @@ export default function WatchlistPage() {
     load()
   }
 
+  async function add(e: FormEvent) {
+    e.preventDefault()
+    const ticker = newTicker.trim().toUpperCase()
+    if (!ticker) return
+    setAdding(true)
+    setAddError(null)
+    try {
+      // Validate it's a real ticker before saving it.
+      await api.getStock(ticker)
+      await api.addWatchlistItem({ ticker, notes: '' })
+      setNewTicker('')
+      await load()
+    } catch (err) {
+      setAddError(err instanceof ApiError && err.status !== 404 ? err.message : `Couldn't find "${ticker}".`)
+    } finally {
+      setAdding(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
@@ -84,6 +115,25 @@ export default function WatchlistPage() {
         />
       </div>
 
+      <form onSubmit={add} className="flex flex-col gap-2 sm:max-w-md">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add a ticker — e.g. SHOP.TO or MSFT"
+            value={newTicker}
+            onChange={(e) => {
+              setNewTicker(e.target.value)
+              setAddError(null)
+            }}
+            aria-label="Ticker to add"
+          />
+          <Button type="submit" disabled={!newTicker.trim() || adding}>
+            <Plus />
+            {adding ? 'Adding…' : 'Add'}
+          </Button>
+        </div>
+        {addError && <p className="px-2 text-[13px] text-warning">{addError}</p>}
+      </form>
+
       <Card className="overflow-hidden p-2">
         {loading && (
           <div className="flex flex-col gap-2 p-2">
@@ -98,7 +148,7 @@ export default function WatchlistPage() {
             <Star className="h-5 w-5 text-foreground-subtle" />
             <p className="text-sm font-medium text-foreground">Nothing here yet</p>
             <p className="max-w-xs text-sm text-foreground-subtle">
-              Analyze a stock and click "Watchlist" to start tracking it here.
+              Add a ticker above, or hit "Watchlist" on any stock's page to start tracking it here.
             </p>
           </div>
         )}
@@ -107,6 +157,7 @@ export default function WatchlistPage() {
           <div className="flex flex-col">
             {items.map((item) => {
               const snap = snapshots[item.ticker]
+              const ready = snap && snap !== 'error'
               return (
                 <div
                   key={item.id}
@@ -114,33 +165,58 @@ export default function WatchlistPage() {
                 >
                   <button
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                    onClick={() => navigate(`/stock/${item.ticker}`)}
+                    onClick={() => navigate(`/stock/${encodeURIComponent(item.ticker)}`)}
                   >
                     <TickerAvatar ticker={item.ticker} />
                     <div className="min-w-0 flex-1">
                       <span className="font-semibold text-foreground">{item.ticker}</span>
                       <p className="truncate text-[13px] text-foreground-subtle">
-                        {snap && snap !== 'error' ? snap.name : 'Loading…'}
+                        {ready ? snap.name : snap === 'error' ? 'Data unavailable' : 'Loading…'}
                       </p>
                     </div>
                   </button>
-                  {snap === 'error' && <span className="text-sm text-foreground-subtle">unavailable</span>}
-                  {snap && snap !== 'error' && (
+                  {ready && (
                     <>
-                      <ChangeIndicator value={snap.price_change_pct} className="hidden w-20 justify-end sm:inline-flex" />
+                      <div className="hidden w-28 text-right sm:block">
+                        <div className="text-sm font-semibold tabular-nums text-foreground">
+                          {fmtCurrency(snap.price, snap.currency)}
+                        </div>
+                        <ChangeIndicator value={snap.price_change_pct} className="justify-end text-[12px]" />
+                      </div>
+                      <ChangeIndicator value={snap.price_change_pct} className="sm:hidden" />
+                      <MiniSubScores scores={snap.sub_scores} className="hidden md:flex" />
                       <ScoreBadge score={snap.score} />
                     </>
                   )}
                   {!snap && <Skeleton className="h-6 w-10 rounded-full" />}
-                  <Button variant="ghost" size="icon" onClick={() => remove(item.id)}>
-                    <Trash2 className="text-foreground-subtle" />
-                  </Button>
+                  <div className="flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTrade(item.ticker)}
+                      aria-label={`Practice trade ${item.ticker}`}
+                      title="Practice trade"
+                    >
+                      <ShoppingCart />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove(item.id)}
+                      aria-label={`Remove ${item.ticker}`}
+                      title="Remove"
+                    >
+                      <Trash2 className="text-foreground-subtle" />
+                    </Button>
+                  </div>
                 </div>
               )
             })}
           </div>
         )}
       </Card>
+
+      <TradeDialog open={trade !== null} ticker={trade} onClose={() => setTrade(null)} />
     </div>
   )
 }
