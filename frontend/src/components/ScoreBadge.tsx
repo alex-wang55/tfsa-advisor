@@ -1,15 +1,12 @@
+import { scoreTone } from '../utils/score'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
-function tone(score: number): 'success' | 'default' | 'warning' {
-  if (score >= 65) return 'success'
-  if (score >= 45) return 'default'
-  return 'warning'
-}
+const VARIANT = { success: 'success', neutral: 'default', warning: 'warning' } as const
 
 export function ScoreBadge({ score, className }: { score: number; className?: string }) {
   return (
-    <Badge variant={tone(score)} className={cn('tabular-nums px-2.5 py-1 text-[13px]', className)}>
+    <Badge variant={VARIANT[scoreTone(score)]} className={cn('tabular-nums px-2.5 py-1 text-[13px]', className)}>
       {Math.round(score)}
     </Badge>
   )

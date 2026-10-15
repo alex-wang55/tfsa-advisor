@@ -21,6 +21,10 @@ class TickerNotFoundError(Exception):
     pass
 
 
+class FxUnavailableError(Exception):
+    pass
+
+
 def _cached(key: str, fetch_fn, force: bool = False):
     now = time.time()
     if not force and key in _cache:
@@ -65,3 +69,16 @@ def fetch_info(ticker: str, force: bool = False) -> dict:
         return info
 
     return _cached(f"info:{ticker}", _fetch, force=force)
+
+
+def fetch_usdcad_history(force: bool = False) -> pd.Series:
+    """Daily USD->CAD closing rates (CAD per 1 USD) for the last 2 years, used
+    to value US holdings in the practice portfolio in Canadian dollars."""
+
+    def _fetch():
+        hist = yf.Ticker("USDCAD=X").history(period="2y", auto_adjust=True)
+        if hist is None or hist.empty:
+            raise FxUnavailableError("Couldn't load the USD/CAD exchange rate")
+        return hist["Close"].dropna()
+
+    return _cached("fx:USDCAD", _fetch, force=force)

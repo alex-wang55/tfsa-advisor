@@ -21,7 +21,7 @@ export function RefreshControl({ onRefresh, refreshing, lastUpdated, className }
 
   return (
     <div className={cn('flex items-center gap-2 text-foreground-subtle', className)}>
-      {lastUpdated && <span className="text-[12px]">Updated {fmtTimeAgo(lastUpdated)}</span>}
+      {lastUpdated && <span className="hidden text-[12px] sm:inline">Updated {fmtTimeAgo(lastUpdated)}</span>}
       <button
         onClick={onRefresh}
         disabled={refreshing}

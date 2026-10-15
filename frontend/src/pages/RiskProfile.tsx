@@ -24,6 +24,33 @@ const EXPERIENCE_OPTIONS: { value: Experience; label: string }[] = [
   { value: 'experienced', label: 'Experienced' },
 ]
 
+const BUCKETS: RiskBucket[] = ['conservative', 'balanced', 'growth']
+
+function BucketSpectrum({ bucket }: { bucket: RiskBucket }) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {BUCKETS.map((b) => (
+        <div key={b} className="flex flex-col gap-2">
+          <div
+            className={cn(
+              'h-2 rounded-full transition-colors',
+              b === bucket ? 'bg-accent' : 'bg-surface-hover',
+            )}
+          />
+          <span
+            className={cn(
+              'text-[12px] font-semibold capitalize',
+              b === bucket ? 'text-foreground' : 'text-foreground-subtle',
+            )}
+          >
+            {b}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const BUCKET_DESCRIPTIONS: Record<RiskBucket, string> = {
   conservative:
     'Analysis will favor stability and dividend quality over growth, and the TFSA planner will suggest a larger ETF core.',
@@ -93,7 +120,7 @@ export default function RiskProfilePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">Your Risk Profile</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Your Risk Profile</h1>
         <p className="mt-1 max-w-2xl text-sm text-foreground-muted">
           This drives how every stock is scored and what allocation the TFSA planner suggests. It's not
           a formal suitability assessment — just a simple starting point.
@@ -157,7 +184,8 @@ export default function RiskProfilePage() {
               {bucket}
             </Badge>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="flex flex-col gap-5">
+            <BucketSpectrum bucket={bucket} />
             <p className="text-sm text-foreground-muted">{BUCKET_DESCRIPTIONS[bucket]}</p>
           </CardContent>
         </Card>
